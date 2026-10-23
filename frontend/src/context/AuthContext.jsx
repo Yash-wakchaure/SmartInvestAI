@@ -1,25 +1,28 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { authService } from '../services/authService';
+import { setAuthToken } from '../services/api';
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(localStorage.getItem('smartinvest_token') || '');
+  const [token, setToken] = useState('');
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const initAuth = async () => {
       if (!token) {
+        setAuthToken('');
         setLoading(false);
         return;
       }
 
       try {
+        setAuthToken(token);
         const res = await authService.getProfile();
         setUser(res.user || null);
       } catch (error) {
-        localStorage.removeItem('smartinvest_token');
+        setAuthToken('');
         setToken('');
         setUser(null);
       } finally {
@@ -33,7 +36,7 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const response = await authService.login(email, password);
     if (response.token) {
-      localStorage.setItem('smartinvest_token', response.token);
+      setAuthToken(response.token);
       setToken(response.token);
       setUser(response.user || null);
       return response;
@@ -44,7 +47,7 @@ export function AuthProvider({ children }) {
   const register = async (name, email, password) => {
     const response = await authService.register(name, email, password);
     if (response.token) {
-      localStorage.setItem('smartinvest_token', response.token);
+      setAuthToken(response.token);
       setToken(response.token);
       setUser(response.user || null);
       return response;
@@ -53,7 +56,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
-    localStorage.removeItem('smartinvest_token');
+    setAuthToken('');
     setToken('');
     setUser(null);
   };

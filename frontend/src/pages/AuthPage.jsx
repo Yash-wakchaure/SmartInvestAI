@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -10,6 +10,12 @@ function AuthPage({ mode = 'login' }) {
   const { login, register } = useAuth();
 
   const isSignup = mode === 'register';
+
+  useEffect(() => {
+    setForm({ name: '', email: '', password: '' });
+    setError('');
+    setLoading(false);
+  }, [mode]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;

@@ -1,14 +1,30 @@
+import { useState, useEffect } from 'react';
 import PredictionCard from '../components/PredictionCard';
 
-const predictions = [
-  { symbol: 'AAPL', prediction: 'up', confidence: 82, risk: 'low', signal: 'bullish' },
-  { symbol: 'MSFT', prediction: 'up', confidence: 78, risk: 'medium', signal: 'momentum' },
-  { symbol: 'NVDA', prediction: 'up', confidence: 88, risk: 'medium', signal: 'breakout' },
-  { symbol: 'AMZN', prediction: 'hold', confidence: 66, risk: 'low', signal: 'steady' },
-  { symbol: 'TSLA', prediction: 'down', confidence: 72, risk: 'high', signal: 'risk-off' },
-];
-
 function PredictionsPage() {
+  const [predictions, setPredictions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch('http://localhost:8000/predictions/batch')
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error('Failed to fetch predictions from ML service');
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setPredictions(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Error fetching ML predictions:', err);
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
+
   return (
     <div className="page-content">
       <div className="page-header">
@@ -18,11 +34,16 @@ function PredictionsPage() {
         </div>
       </div>
 
-      <div className="grid-3">
-        {predictions.map((item) => (
-          <PredictionCard key={item.symbol} {...item} />
-        ))}
-      </div>
+      {loading && <p style={{ color: '#aaa', padding: '1rem 0' }}>Analyzing market signals & running ML models...</p>}
+      {error && <p style={{ color: '#ff6b6b' }}>Error connecting to ML model: {error}</p>}
+
+      {!loading && !error && (
+        <div className="grid-3">
+          {predictions.map((item) => (
+            <PredictionCard key={item.symbol} {...item} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

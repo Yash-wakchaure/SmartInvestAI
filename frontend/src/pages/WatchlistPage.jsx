@@ -1,12 +1,29 @@
-const watchlist = [
-  { symbol: 'META', price: 515.2, change: '+2.15%' },
-  { symbol: 'AMD', price: 168.7, change: '+1.64%' },
-  { symbol: 'INTC', price: 57.8, change: '-0.42%' },
-  { symbol: 'SHOP', price: 79.3, change: '+3.08%' },
-  { symbol: 'PLTR', price: 27.2, change: '+2.63%' },
-];
+import { useState, useEffect } from 'react';
 
 function WatchlistPage() {
+  const [watchlist, setWatchlist] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch('http://localhost:8000/watchlist/live')
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error('Failed to fetch watchlist from ML service');
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setWatchlist(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Error fetching watchlist:', err);
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
+
   return (
     <div className="page-content">
       <div className="page-header">
@@ -16,30 +33,42 @@ function WatchlistPage() {
         </div>
       </div>
 
-      <div className="panel">
-        <div className="table-wrap">
-          <table>
+      {loading && <p style={{ color: '#aaa', padding: '1rem 0' }}>Fetching live prices...</p>}
+      {error && <p style={{ color: '#ff6b6b' }}>Error loading watchlist: {error}</p>}
+
+      {!loading && !error && (
+        <div className="card table-container">
+          <table className="watchlist-table">
             <thead>
               <tr>
-                <th>Symbol</th>
-                <th>Price</th>
-                <th>Change</th>
-                <th>Trend</th>
+                <th>SYMBOL</th>
+                <th>PRICE</th>
+                <th>CHANGE</th>
+                <th>TREND</th>
               </tr>
             </thead>
             <tbody>
-              {watchlist.map((item) => (
-                <tr key={item.symbol}>
-                  <td>{item.symbol}</td>
-                  <td>₹{item.price}</td>
-                  <td className={item.change.startsWith('-') ? 'negative' : 'positive'}>{item.change}</td>
-                  <td>{item.change.startsWith('-') ? 'Cooling' : 'Momentum'}</td>
-                </tr>
-              ))}
+              {watchlist.map((item) => {
+                const isPositive = item.change && !item.change.startsWith('-');
+                return (
+                  <tr key={item.symbol}>
+                    <td className="symbol-cell">{item.symbol}</td>
+                    <td>{item.price}</td>
+                    <td style={{ color: isPositive ? '#22c55e' : '#ef4444' }}>
+                      {item.change}
+                    </td>
+                    <td>
+                      <span className={`badge ${item.trend.toLowerCase()}`}>
+                        {item.trend}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
-      </div>
+      )}
     </div>
   );
 }

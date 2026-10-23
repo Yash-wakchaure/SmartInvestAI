@@ -1,5 +1,11 @@
 import axios from 'axios';
 
+let authToken = '';
+
+export const setAuthToken = (token) => {
+  authToken = token || '';
+};
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
   headers: {
@@ -8,9 +14,10 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('smartinvest_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (authToken) {
+    config.headers.Authorization = `Bearer ${authToken}`;
+  } else {
+    delete config.headers.Authorization;
   }
   return config;
 });

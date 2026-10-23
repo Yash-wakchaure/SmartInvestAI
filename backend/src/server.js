@@ -1,17 +1,20 @@
+const dns = require("dns");
+dns.setServers(["8.8.8.8"]);
+
+
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 
-// connect to database (if configured)
 const connectDB = require("./config/db");
 
 const app = express();
-
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json());  
 
+// Health check
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
@@ -19,16 +22,16 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// attempt DB connection if MONGO_URI is provided
+// Connect to MongoDB
 if (process.env.MONGO_URI) {
-  connectDB().catch((err) => console.error('DB connection failed:', err.message));
+  connectDB();
 } else {
-  console.warn('MONGO_URI not set — running without MongoDB');
+  console.warn("MongoDB is disabled or MONGO_URI is missing");
 }
 
-// Mount auth routes
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/portfolios', require('./routes/portfolioRoutes'));
+// Routes
+app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/portfolios", require("./routes/portfolioRoutes"));
 
 app.listen(PORT, () => {
   console.log(`SmartInvest AI server running on port ${PORT}`);
