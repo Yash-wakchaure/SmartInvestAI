@@ -10,9 +10,12 @@ function DashboardPage() {
     setLoading(true);
     setError(null);
     fetch(`http://localhost:8000/stock/analyze?symbol=${encodeURIComponent(ticker)}`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`Stock "${ticker}" not found on NSE India`);
-        return res.json();
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || `Could not analyze "${ticker}" (HTTP ${res.status})`);
+        }
+        return data;
       })
       .then((data) => {
         setStockData(data);
